@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Season Ticket Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        const Calculator = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <rect width="16" height="20" x="4" y="2" rx="2" />
+                <line x1="8" x2="16" y1="6" y2="6" />
+                <line x1="16" x2="16" y1="14" y2="14" />
+                <path d="M16 10h.01" />
+                <path d="M12 10h.01" />
+                <path d="M8 10h.01" />
+                <path d="M12 14h.01" />
+                <path d="M8 14h.01" />
+                <path d="M12 18h.01" />
+                <path d="M8 18h.01" />
+            </svg>
+        );
+
+        function SeasonTicketCalculator() {
+            const [selectedPreset, setSelectedPreset] = useState('custom');
+            const [monthlyCost, setMonthlyCost] = useState('');
+            const [discount, setDiscount] = useState('');
+            const [tripCost, setTripCost] = useState('');
+            const [numTrips, setNumTrips] = useState('');
+
+            const presets = [
+                { id: 'custom', name: 'Custom', cost: '', discount: '' },
+                { id: 'nl-gvb-easy', name: 'Netherlands - GVB Easy Flex', cost: '1', discount: '10' },
+                { id: 'nl-gvb-flex', name: 'Netherlands - GVB Flex', cost: '5.5', discount: '20' },
+                { id: 'nl-gvb-extra', name: 'Netherlands - GVB Extra Flex', cost: '15', discount: '40' }
+            ];
+
+            const handlePresetChange = (e) => {
+                const presetId = e.target.value;
+                setSelectedPreset(presetId);
+
+                const preset = presets.find(p => p.id === presetId);
+                if (preset && presetId !== 'custom') {
+                    setMonthlyCost(preset.cost);
+                    setDiscount(preset.discount);
+                }
+            };
+
+            const calculate = () => {
+                const monthly = parseFloat(monthlyCost);
+                const discountPercent = parseFloat(discount);
+                const trip = parseFloat(tripCost);
+                const trips = numTrips ? parseFloat(numTrips) : null;
+
+                if (isNaN(monthly) || isNaN(discountPercent) || isNaN(trip)) {
+                    return null;
+                }
+
+                const discountedTripCost = trip * (1 - discountPercent / 100);
+                const savingsPerTrip = trip - discountedTripCost;
+                const breakEvenTrips = savingsPerTrip > 0 ? Math.ceil(monthly / savingsPerTrip) : Infinity;
+
+                if (trips) {
+                    const totalWithPass = monthly + (trips * discountedTripCost);
+                    const totalWithout = trips * trip;
+                    const worthIt = totalWithPass < totalWithout;
+                    const savings = totalWithout - totalWithPass;
+
+                    return {
+                        worthIt,
+                        savings: Math.abs(savings),
+                        breakEvenTrips,
+                        actualTrips: trips
+                    };
+                }
+
+                return { breakEvenTrips };
+            };
+
+            const result = calculate();
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex flex-col items-center justify-center p-4 relative">
+                    <a
+                        href="https://github.com/itsamirhn/SeasonTicket"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
+                        aria-label="View on GitHub"
+                    >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                        </svg>
+                    </a>
+
+                    <div className="w-full max-w-md">
+                        <div className="bg-white rounded-2xl shadow-lg p-8">
+                            <div className="flex items-center gap-3 mb-8">
+                                <Calculator className="w-8 h-8 text-blue-600" />
+                                <h1 className="text-2xl font-semibold text-slate-800">
+                                    Season Ticket Calculator
+                                </h1>
+                            </div>
+
+                            <div className="space-y-5">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                        Select Package
+                                    </label>
+                                    <select
+                                        value={selectedPreset}
+                                        onChange={handlePresetChange}
+                                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white"
+                                    >
+                                        {presets.map(preset => (
+                                            <option key={preset.id} value={preset.id}>
+                                                {preset.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <p className="mt-1 text-xs text-slate-500">
+                                        Missing a package? <a href="https://github.com/yourusername/season-ticket-calculator/pulls" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700 underline">Submit a PR</a>
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                        Monthly Pass Cost (€)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={monthlyCost}
+                                        onChange={(e) => {
+                                            setMonthlyCost(e.target.value);
+                                            setSelectedPreset('custom');
+                                        }}
+                                        placeholder="10.00"
+                                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                        Discount per Trip (%)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="1"
+                                        value={discount}
+                                        onChange={(e) => {
+                                            setDiscount(e.target.value);
+                                            setSelectedPreset('custom');
+                                        }}
+                                        placeholder="20"
+                                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                        Single Trip Cost (€)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={tripCost}
+                                        onChange={(e) => setTripCost(e.target.value)}
+                                        placeholder="2.40"
+                                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                        Trips per Month (optional)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="1"
+                                        value={numTrips}
+                                        onChange={(e) => setNumTrips(e.target.value)}
+                                        placeholder="Leave empty to see break-even"
+                                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                    />
+                                </div>
+                            </div>
+
+                            {result && (
+                                <div className="mt-8 p-6 bg-slate-50 rounded-xl">
+                                    {result.worthIt !== undefined ? (
+                                        <div className="text-center">
+                                            <div className="text-5xl mb-3">
+                                                {result.worthIt ? '✓' : '✗'}
+                                            </div>
+                                            <div className={`text-xl font-semibold mb-2 ${result.worthIt ? 'text-green-600' : 'text-red-600'}`}>
+                                                {result.worthIt ? 'Worth It!' : 'Not Worth It'}
+                                            </div>
+                                            <div className="text-slate-600">
+                                                {result.worthIt
+                                                    ? `You'll save €${result.savings.toFixed(2)}/month`
+                                                    : `You'll lose €${result.savings.toFixed(2)}/month`
+                                                }
+                                            </div>
+                                            <div className="text-sm text-slate-500 mt-3">
+                                                Break-even point: {result.breakEvenTrips} trips
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center">
+                                            <div className="text-3xl font-bold text-blue-600 mb-2">
+                                                {result.breakEvenTrips}
+                                            </div>
+                                            <div className="text-slate-600">
+                                                trips needed to break even
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <footer className="mt-8 text-center text-sm text-slate-500">
+                        © {new Date().getFullYear()} Season Ticket Calculator | Created with AI by <a href="https://amirhn.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700 underline">Amir</a>
+                    </footer>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('app'));
+        root.render(<SeasonTicketCalculator />);
+    </script>
+</body>
+
+</html>
